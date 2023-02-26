@@ -1,6 +1,6 @@
 import os
 from app import app, db, login_manager
-from flask import render_template, request, redirect, url_for, flash, session, abort
+from flask import render_template, request, redirect, url_for, flash, session, abort, send_from_directory
 from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.utils import secure_filename
 from app.models import UserProfile
@@ -65,6 +65,18 @@ def login():
 
     return render_template("login.html", form=form)
 
+
+@app.route("/uploads/<filename>")
+def get_image(filename):
+    root_dir = os.getcwd()
+
+    return send_from_directory(os.path.join(root_dir, app.config['UPLOAD_FOLDER']), filename)
+
+@app.route("/files")
+@login_required
+def files():
+    return render_template("files.html", files=get_uploaded_images())
+
 # user_loader callback. This callback is used to reload the user object from
 # the user ID stored in the session
 @login_manager.user_loader
@@ -74,6 +86,14 @@ def load_user(id):
 ###
 # The functions below should be applicable to all Flask apps.
 ###
+
+def get_uploaded_images():
+    rootdir = os.getcwd()
+    imgs = []
+    for subdir, dirs, files in os.walk(rootdir + '/uploads'):
+        for file in files:
+            imgs.append(os.path.join(file)) 
+    return imgs
 
 # Flash errors from the form if validation fails
 def flash_errors(form):
